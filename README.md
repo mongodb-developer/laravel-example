@@ -1,5 +1,7 @@
 # laravel-example
-Laravel and MongoDB example main files. Read the full tutorial here:  https://www.mongodb.com/compatibility/mongodb-laravel-integration 
+Laravel and MongoDB example main files. 
+- Read the full tutorial here:  https://www.mongodb.com/compatibility/mongodb-laravel-integration 
+- See the video here: https://learn.mongodb.com/courses/getting-started-with-laravel-and-mongodb
 
 ## Laravel MongoDB Documentation
 
