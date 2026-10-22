@@ -1,0 +1,59 @@
+name: PHP
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PHP_VERSION: '8.5'
+  LARAVEL_VERSION: '13.11.0'
+  LARAVEL_MONGODB_VERSION: '5.11.0'
+  MONGODB_ATLAS_LOCAL_IMAGE: &mongodb_atlas_local_image 'mongodb/mongodb-atlas-local:8.0.30'
+
+jobs:
+  tests:
+    name: Functional tests
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: *mongodb_atlas_local_image
+        ports:
+          - 27017:27017
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mongodb
+          coverage: none
+
+      - name: Create a Laravel application
+        run: composer create-project laravel/laravel:$LARAVEL_VERSION application --no-interaction --prefer-dist
+
+      - name: Install mongodb/laravel-mongodb
+        working-directory: application
+        run: composer require mongodb/laravel-mongodb:$LARAVEL_MONGODB_VERSION --no-interaction --prefer-dist
+
+      # This repository stores the files from the tutorial, not a full Laravel
+      # application. Copy them into a fresh application, as the tutorial does.
+      - name: Copy the example files
+        run: cp -R myapp/. application/
+
+      - name: Register the API routes
+        working-directory: application
+        run: |
+          sed -i "s|web: __DIR__.'/../routes/web.php',|web: __DIR__.'/../routes/web.php',\n        api: __DIR__.'/../routes/api.php',|" bootstrap/app.php
+          grep -q "api: __DIR__" bootstrap/app.php
+
+      - name: Run the tests
+        working-directory: application
+        run: php artisan test
+        env:
+          DB_CONNECTION: mongodb
